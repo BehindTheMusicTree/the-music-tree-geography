@@ -44,6 +44,18 @@ the processing suite against the installed wheel outside the source checkout.
 
 ## Distribution
 
-Version 0.1.0 is prepared but unpublished. Release publication and consumer
-release pins require separate approval. Do not merge consumers until the package
-is resolvable by their frozen install. No runtime service or database is added.
+Releases use an annotated `v<version>` Git tag and a GitHub Release with wheel and
+sdist assets. There is no PyPI publication or deployment. Consumers install from
+the public Git repository at the release tag and commit their resolved lockfile.
+No runtime service or database is added.
+
+The maintainer owns publication manually; there is no CI tagger. Prepare the
+`pyproject.toml` version and dated changelog through a reviewed PR to `main`.
+After that PR and validation on its exact merged commit pass, build with
+`uv build`, tag that commit and publish the GitHub Release with the built assets.
+Publication and consumer release pins require explicit approval.
+
+Verify the remote tag's dereferenced commit before updating any consumer. On a
+partial publication, reuse the same tag and upload only missing assets; never
+move a released tag. Consumers can roll back by restoring their prior dependency
+and lockfile together. Do not merge consumers until their frozen install works.
