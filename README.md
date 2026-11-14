@@ -3,6 +3,12 @@
 Geographic evidence and spatial processing extracted from the Apache-2.0
 `BehindTheMusicTree/the-music-tree-pipelines` geohistory pipeline.
 
+This supports cultural and historical geography: cultural areas can overlap and
+change over time, and their memberships need not match administrative or
+statistical regions. Spatial containment is a separate relation from cultural
+affiliation. Callers supply explicit curated affiliations; the processing layer
+does not derive them from polygons or impose a single regional partition.
+
 The base package exposes immutable evidence records without Django, Polars,
 NumPy or Shapely. Install the `processing` extra for spatial resolution,
 reference land processing, Wikidata statement classification and historical
