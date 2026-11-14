@@ -42,27 +42,25 @@ def test_touching_components_and_antimeridian_require_verified_identity():
     assert index.select(shapely.Point(179.5, 0.5), is_simple_island=True, verify_identity=lambda _: False) is None
 
 
-def test_physical_qid_and_independent_coordinate_must_identify_same_land(tmp_path):
+def test_physical_qid_and_independent_coordinate_must_identify_same_land():
     import polars as pl
 
     from the_music_tree_geography.reference_land import reference_island_geometries
 
     island, neighbor = shapely.box(0, 0, 4, 4), shapely.box(10, 0, 14, 4)
-    pl.DataFrame({"level": [0], "geometry_wkb": [shapely.union_all([island, neighbor]).wkb]}).write_parquet(
-        tmp_path / "natural_earth_admin.parquet"
-    )
-    pl.DataFrame(
+    admin = pl.DataFrame({"level": [0], "geometry_wkb": [shapely.union_all([island, neighbor]).wkb]})
+    physical = pl.DataFrame(
         {
             "wikidata_id": ["Q1", "Q2", "Q3"],
             "kind": ["Island", "Island", "Island group"],
             "geometry_wkb": [island.wkb, neighbor.wkb, island.wkb],
         }
-    ).write_parquet(tmp_path / "natural_earth_physical.parquet")
+    )
     crosswalk = pl.DataFrame({"wikidata_id": ["Q1", "Q2", "Q3"], "entity_id": ["one", "wrong", "group"]})
     entities = pl.DataFrame(
         {"entity_id": ["one", "wrong", "group"], "latitude": [2.0, 2.0, 2.0], "longitude": [2.0, 2.0, 2.0]}
     )
-    result = reference_island_geometries(tmp_path, crosswalk, entities)
+    result = reference_island_geometries(admin, physical, crosswalk, entities)
     assert set(result) == {"one"}
     assert shapely.equals(result["one"], island)
 
@@ -94,3 +92,35 @@ def test_antimeridian_components_cannot_certify_a_complete_island():
         assert (
             index.select(shapely.Point(longitude, 0.5), is_simple_island=True, verify_identity=lambda _: True) is None
         )
+
+
+def test_reference_frames_map_admin_and_identify_island_without_artifact_paths():
+    import polars as pl
+
+    from the_music_tree_geography.reference_land import (
+        reference_admin_geometries,
+        reference_island_geometries,
+        reference_land,
+    )
+
+    land = shapely.box(0, 0, 2, 2)
+    admin = pl.DataFrame({"ne_id": ["ne1"], "level": [0], "geometry_wkb": [shapely.to_wkb(land)]})
+    mapping = pl.DataFrame({"ne_id": ["ne1"], "entity_id": ["country"]})
+    assert shapely.equals(reference_land(admin), land)
+    assert shapely.equals(reference_admin_geometries(admin, mapping)["country"], land)
+    physical = pl.DataFrame(
+        {"kind": ["Island"], "wikidata_id": ["Q1"], "geometry_wkb": [shapely.to_wkb(shapely.box(0.5, 0.5, 1.5, 1.5))]}
+    )
+    crosswalk = pl.DataFrame({"wikidata_id": ["Q1"], "entity_id": ["island"]})
+    entities = pl.DataFrame({"entity_id": ["island"], "latitude": [1.0], "longitude": [1.0]})
+    assert shapely.equals(reference_island_geometries(admin, physical, crosswalk, entities)["island"], land)
+
+
+def test_missing_reference_country_fails_instead_of_inventing_land():
+    import polars as pl
+    import pytest
+
+    from the_music_tree_geography.reference_land import reference_land
+
+    with pytest.raises(ValueError, match="no admin-0 country"):
+        reference_land(pl.DataFrame(schema={"level": pl.Int64, "geometry_wkb": pl.Binary}))

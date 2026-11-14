@@ -2,7 +2,6 @@
 
 from collections import defaultdict
 from collections.abc import Callable
-from pathlib import Path
 
 from the_music_tree_geography.place_relation_geometry import ReferenceGeometry
 
@@ -10,22 +9,16 @@ import polars as pl
 import shapely
 
 
-def reference_land(bronze_dir: Path) -> shapely.Geometry:
-    countries = pl.read_parquet(bronze_dir / "natural_earth_admin.parquet", columns=["level", "geometry_wkb"]).filter(
-        pl.col("level") == 0
-    )
+def reference_land(admin: pl.DataFrame) -> shapely.Geometry:
+    countries = admin.filter(pl.col("level") == 0)
     if countries.is_empty():
-        raise ValueError("natural_earth_admin.parquet has no admin-0 country, cannot build the land layer")
+        raise ValueError("Natural Earth data has no admin-0 country, cannot build the land layer")
     return shapely.union_all(shapely.make_valid(shapely.from_wkb(countries["geometry_wkb"].to_list())))
 
 
-def reference_admin_geometries(bronze_dir: Path, ne_map: pl.DataFrame) -> dict[str, shapely.Geometry]:
+def reference_admin_geometries(admin: pl.DataFrame, ne_map: pl.DataFrame) -> dict[str, shapely.Geometry]:
     """Union Natural Earth polygons mapped to each entity, independent of containment."""
-    polygons = (
-        pl.read_parquet(bronze_dir / "natural_earth_admin.parquet", columns=["ne_id", "geometry_wkb"])
-        .join(ne_map.select("ne_id", "entity_id").drop_nulls(), on="ne_id")
-        .sort("ne_id")
-    )
+    polygons = admin.join(ne_map.select("ne_id", "entity_id").drop_nulls(), on="ne_id").sort("ne_id")
     grouped: dict[str, list[shapely.Geometry]] = defaultdict(list)
     for entity_id, wkb in polygons.select("entity_id", "geometry_wkb").rows():
         grouped[entity_id].append(shapely.make_valid(shapely.from_wkb(wkb)))
@@ -67,16 +60,16 @@ class IslandLandIndex:
 
 
 def reference_island_geometries(
-    bronze_dir: Path, crosswalk: pl.DataFrame, entities: pl.DataFrame
+    admin: pl.DataFrame, physical: pl.DataFrame, crosswalk: pl.DataFrame, entities: pl.DataFrame
 ) -> dict[str, shapely.Geometry]:
     """Identify simple islands against QID-linked physical labels before selecting land."""
-    physical = pl.read_parquet(bronze_dir / "natural_earth_physical.parquet").filter(pl.col("kind") == "Island")
+    physical = physical.filter(pl.col("kind") == "Island")
     physical = (
         physical.join(crosswalk, left_on="wikidata_id", right_on="wikidata_id")
         .join(entities.select("entity_id", "latitude", "longitude"), on="entity_id")
         .drop_nulls(["latitude", "longitude"])
     )
-    index = IslandLandIndex(reference_land(bronze_dir))
+    index = IslandLandIndex(reference_land(admin))
     result: dict[str, shapely.Geometry] = {}
     for row in physical.iter_rows(named=True):
         label_polygon = shapely.make_valid(shapely.from_wkb(row["geometry_wkb"]))
