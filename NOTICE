@@ -1,0 +1,9 @@
+TheMusicTree geography
+
+Extracted from BehindTheMusicTree/the-music-tree-pipelines, Apache License 2.0,
+commit d382634 (geohistory Silver processing and its tests).
+
+The original algorithms and tests are retained. Changes separate immutable
+contracts from optional processing dependencies and pure temporal transforms
+from pipeline file/curation orchestration. No upstream geographic dataset is
+included in this distribution.
