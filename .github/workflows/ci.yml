@@ -1,0 +1,64 @@
+name: Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: [self-hosted, linux, btmt]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - run: uv sync --frozen --extra processing
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uvx --from actionlint-py==1.7.12.25 actionlint
+
+  test:
+    name: Tests (Python ${{ matrix.python }})
+    runs-on: [self-hosted, linux, btmt]
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.12", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: uv sync --frozen --extra processing
+      - run: uv build
+      - name: Base wheel has no processing dependencies
+        shell: bash
+        run: |
+          uv venv "$RUNNER_TEMP/geography-contracts" --python '${{ matrix.python }}' --clear
+          uv pip install --python "$RUNNER_TEMP/geography-contracts/bin/python" dist/*.whl
+          "$RUNNER_TEMP/geography-contracts/bin/python" -I scripts/check_contract_install.py
+      - name: Processing wheel works outside the source checkout
+        shell: bash
+        run: |
+          uv venv "$RUNNER_TEMP/geography-processing" --python '${{ matrix.python }}' --clear
+          wheel=$(find "$PWD/dist" -name '*.whl' -print)
+          uv pip install --python "$RUNNER_TEMP/geography-processing/bin/python" "${wheel}[processing]" pytest==9.1.1
+          test_dir="$PWD/tests"
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/geography-processing/bin/python" -I -m pytest "$test_dir" --import-mode=importlib -q
+
+  tests-success:
+    name: Tests success
+    needs: [test]
+    if: always()
+    runs-on: [self-hosted, linux, btmt]
+    steps:
+      - env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: jq -e 'all(.[]; .result == "success")' <<<"$NEEDS"
