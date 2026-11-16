@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Keep agent plans and scratch data out of Git while tracking the directory ignore rules.
+
 ## [0.1.0] - 2026-11-14
 
 ### Fixed
