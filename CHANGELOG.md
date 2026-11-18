@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Removed
+
+- Drop the tracked `.agent-plans/.gitignore`: plans now live in the common git directory.
+
 ### Fixed
 
 - Keep agent plans and scratch data out of Git while tracking the directory ignore rules.
