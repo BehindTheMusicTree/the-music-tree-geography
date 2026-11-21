@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### CI
+
+- Add the canonical workflow-level `concurrency` to `ci.yml`: a superseded pull-request run is cancelled.
+
 ### Removed
 
 - Drop the tracked `.agent-plans/.gitignore`: plans now live in the common git directory.
