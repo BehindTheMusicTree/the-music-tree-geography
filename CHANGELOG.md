@@ -4,7 +4,7 @@
 
 ### CI
 
-- Pushes and pull requests run the `org-conformance` check (github-workflows v6.5.0), which `required-checks.json` in github-config declares as an optional job.
+- Pushes and pull requests run the Org conformance workflow (github-workflows v6.5.0). Pull requests targeting `main` require the `org-conformance / org-conformance` check.
 - Add the canonical workflow-level `concurrency` to `ci.yml`: a superseded pull-request run is cancelled.
 
 ### Removed

@@ -46,7 +46,8 @@ source provenance. See [NOTICE](NOTICE) for the code's extraction provenance.
 `uv run ruff format --check .`. Python 3.12 and 3.14 are supported. CI builds the sdist and wheel, verifies
 base-wheel imports in an environment with no processing dependencies, and runs
 the processing suite against the installed wheel outside the source checkout.
-`Lint` and `Tests success` are the required PR gates declared in github-config.
+`Lint`, `Tests success`, and `org-conformance / org-conformance` are the
+required checks for pull requests targeting `main`, as declared in github-config.
 
 ## Distribution
 
