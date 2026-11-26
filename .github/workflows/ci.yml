@@ -57,9 +57,33 @@ jobs:
           cd "$RUNNER_TEMP"
           "$RUNNER_TEMP/geography-processing/bin/python" -I -m pytest "$test_dir" --import-mode=importlib -q
 
+  pytest:
+    name: Pytest coverage run
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - run: uv sync --frozen --extra processing
+      - name: Run the tests from the checkout with coverage
+        run: uv run pytest --cov=the_music_tree_geography --cov-branch --cov-report=xml:coverage-pytest.xml --cov-fail-under=0
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-pytest
+          path: coverage-pytest.xml
+          if-no-files-found: error
+
+  coverage:
+    needs: pytest
+    permissions:
+      contents: read
+    uses: BehindTheMusicTree/github-workflows/.github/workflows/coverage.yml@18b90bc9c64b9abab0a86e7ea74f65acac93aec1 # v6.6.0
+
   tests-success:
     name: Tests success
-    needs: [test]
+    needs: [test, pytest, coverage]
     if: always()
     runs-on: ubuntu-latest
     steps:
