@@ -4,6 +4,7 @@
 
 ### CI
 
+- The required `Tests success` gate now also needs the organization coverage check (github-workflows coverage.yml v6.6.0): a `Pytest coverage run` job runs the tests from the checkout and uploads the Cobertura report that `coverage / coverage` merges and checks.
 - Pushes and pull requests run the Org conformance workflow (github-workflows v6.5.0). Pull requests targeting `main` require the `org-conformance / org-conformance` check.
 - Add the canonical workflow-level `concurrency` to `ci.yml`: a superseded pull-request run is cancelled.
 
