@@ -6,4 +6,4 @@ Python package of geographic evidence records and spatial/time processing extrac
 - The base package must import without Django, Polars, NumPy or Shapely; only the `processing` extra may depend on them.
 - Geographic relations are evidence, not musical membership: keep unknown dates null, preserve entity IDs, provenance and ranks, never infer containment from overlap or succession.
 - Ingestion, credentials, scheduling and artifact paths belong to pipelines; do not add them here. Source data is not redistributed.
-- Releases are manual: reviewed PR for `pyproject.toml` version and `CHANGELOG.md`, then an annotated `v<version>` tag (see README Distribution).
+- Releases: Release Please on `main`; `feat:`/`fix:` PR titles start a release once enrolled (see README Distribution).

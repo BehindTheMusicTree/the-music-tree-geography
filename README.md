@@ -56,11 +56,11 @@ sdist assets. There is no PyPI publication or deployment. Consumers install from
 the public Git repository at the release tag and commit their resolved lockfile.
 No runtime service or database is added.
 
-The maintainer owns publication manually; there is no CI tagger. Prepare the
-`pyproject.toml` version and dated changelog through a reviewed PR to `main`.
-After that PR and validation on its exact merged commit pass, build with
-`uv build`, tag that commit and publish the GitHub Release with the built assets.
-Publication and consumer release pins require explicit approval.
+Release Please opens a release PR on `main` from `feat:`/`fix:` PR titles; CI
+auto-merges it. The merge updates the `pyproject.toml` and `uv.lock` versions and
+`CHANGELOG.md`, then the shared tag automation creates the annotated tag and
+`publish.yml` builds with `uv build` and publishes the GitHub Release with the
+wheel and sdist. Consumer release pins still require explicit approval.
 
 Verify the remote tag's dereferenced commit before updating any consumer. On a
 partial publication, reuse the same tag and upload only missing assets; never
