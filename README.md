@@ -58,9 +58,11 @@ No runtime service or database is added.
 
 Release Please opens a release PR on `main` from `feat:`/`fix:` PR titles; CI
 auto-merges it. The merge updates the `pyproject.toml` and `uv.lock` versions and
-`CHANGELOG.md`, then the shared tag automation creates the annotated tag and
+`CHANGELOG.md`. The shared tag automation creates the annotated tag and
 `publish.yml` builds with `uv build` and publishes the GitHub Release with the
-wheel and sdist. Consumer release pins still require explicit approval.
+wheel and sdist; both are activated in a follow-up change, and until then no tag
+or Release is created automatically. Consumer release pins still require
+explicit approval.
 
 Verify the remote tag's dereferenced commit before updating any consumer. On a
 partial publication, reuse the same tag and upload only missing assets; never
